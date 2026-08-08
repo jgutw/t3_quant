@@ -1,0 +1,14 @@
+=== V1.2 regime — st5_regime_vwap ===
+Final PnL:          $-124.00
+Max Drawdown:       $-544.81
+Worst intraday PnL: $-282.31
+Total commission:   $122.00
+Trades:             122
+Trading days:       128
+Trades / day:       0.95
+Win rate:           27.0%
+Expectancy / trade: $-1.99
+Avg win / avg loss: $74.51 / $-30.36
+Profit factor:      0.91
+Locked-out days:    0
+Exit reasons:       {'stop': 87, 'signal': 35}

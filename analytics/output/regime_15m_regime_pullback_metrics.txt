@@ -1,0 +1,14 @@
+=== 15m regime — regime_pullback ===
+Final PnL:          $-102.00
+Max Drawdown:       $-333.25
+Worst intraday PnL: $-461.44
+Total commission:   $156.00
+Trades:             156
+Trading days:       128
+Trades / day:       1.22
+Win rate:           28.2%
+Expectancy / trade: $-15.79
+Avg win / avg loss: $62.86 / $-46.68
+Profit factor:      0.53
+Locked-out days:    0
+Exit reasons:       {'stop': 99, 'signal': 57}

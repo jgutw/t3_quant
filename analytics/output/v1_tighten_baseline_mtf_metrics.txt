@@ -1,0 +1,14 @@
+=== V1.1 tighten — baseline_mtf ===
+Final PnL:          $-248.19
+Max Drawdown:       $-991.12
+Worst intraday PnL: $-458.81
+Total commission:   $467.00
+Trades:             467
+Trading days:       128
+Trades / day:       3.65
+Win rate:           28.7%
+Expectancy / trade: $6.69
+Avg win / avg loss: $93.69 / $-28.31
+Profit factor:      1.33
+Locked-out days:    0
+Exit reasons:       {'stop': 294, 'signal': 131, 'session_eod': 42}

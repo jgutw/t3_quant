@@ -1,0 +1,14 @@
+=== Regime spec — regime_only ===
+Final PnL:          $-140.44
+Max Drawdown:       $-668.81
+Worst intraday PnL: $-320.56
+Total commission:   $373.00
+Trades:             373
+Trading days:       128
+Trades / day:       2.91
+Win rate:           26.8%
+Expectancy / trade: $-1.63
+Avg win / avg loss: $76.16 / $-30.12
+Profit factor:      0.93
+Locked-out days:    0
+Exit reasons:       {'stop': 263, 'signal': 110}

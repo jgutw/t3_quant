@@ -1,0 +1,14 @@
+=== V1.2 regime — st5_regime ===
+Final PnL:          $-155.00
+Max Drawdown:       $-544.81
+Worst intraday PnL: $-282.31
+Total commission:   $208.00
+Trades:             208
+Trading days:       128
+Trades / day:       1.62
+Win rate:           27.9%
+Expectancy / trade: $-0.83
+Avg win / avg loss: $75.82 / $-30.47
+Profit factor:      0.96
+Locked-out days:    0
+Exit reasons:       {'stop': 146, 'signal': 62}

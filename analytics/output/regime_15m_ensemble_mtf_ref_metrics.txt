@@ -1,0 +1,14 @@
+=== 15m regime — ensemble_mtf_ref ===
+Final PnL:          $0.00
+Max Drawdown:       $-733.25
+Worst intraday PnL: $-527.38
+Total commission:   $171.00
+Trades:             171
+Trading days:       128
+Trades / day:       1.34
+Win rate:           36.8%
+Expectancy / trade: $14.87
+Avg win / avg loss: $119.26 / $-46.02
+Profit factor:      1.51
+Locked-out days:    1
+Exit reasons:       {'session_eod': 44, 'stop': 92, 'signal': 34, 'risk_lock': 1}

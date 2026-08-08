@@ -1,0 +1,14 @@
+=== V1.1 tighten — tight_full ===
+Final PnL:          $-93.00
+Max Drawdown:       $-342.69
+Worst intraday PnL: $-253.94
+Total commission:   $117.00
+Trades:             117
+Trading days:       128
+Trades / day:       0.91
+Win rate:           21.4%
+Expectancy / trade: $-10.35
+Avg win / avg loss: $57.49 / $-28.79
+Profit factor:      0.54
+Locked-out days:    0
+Exit reasons:       {'stop': 83, 'signal': 34}

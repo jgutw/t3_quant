@@ -1,0 +1,12 @@
+=== V1 MES 5m Ensemble (MTF=ON CPR=OFF, equal weight) ===
+Final PnL:          $-86.25
+Max Drawdown:       $-2,663.75
+Trades:             319
+Trading days:       128
+Trades / day:       2.49
+Win rate:           32.0%
+Expectancy / trade: $1.53
+Avg win / avg loss: $125.37 / $-56.69
+Profit factor:      1.04
+Locked-out days:    1
+Exit reasons:       {'signal': 155, 'stop': 163, 'eod': 1}

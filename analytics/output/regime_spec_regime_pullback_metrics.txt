@@ -1,0 +1,14 @@
+=== Regime spec — regime_pullback ===
+Final PnL:          $-78.44
+Max Drawdown:       $-596.81
+Worst intraday PnL: $-314.94
+Total commission:   $301.00
+Trades:             301
+Trading days:       128
+Trades / day:       2.35
+Win rate:           23.3%
+Expectancy / trade: $-7.13
+Avg win / avg loss: $68.78 / $-30.13
+Profit factor:      0.69
+Locked-out days:    0
+Exit reasons:       {'stop': 222, 'signal': 79}

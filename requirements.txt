@@ -1,0 +1,7 @@
+numpy>=1.26
+pandas>=2.2
+databento>=0.83
+python-dotenv>=1.0
+pyarrow>=13.0
+plotly>=6.0
+jupyter>=1.0
