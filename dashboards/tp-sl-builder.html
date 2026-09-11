@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TP / SL builder</title>
+  <style>
+    :root {
+      --bg: #141414;
+      --surface: #1c1c1c;
+      --text: #f0f0f0;
+      --muted: #9a9a9a;
+      --line: #2c2c2c;
+      --fill: #242424;
+      --accent: #3b82f6;
+      --ok: #34d399;
+      --warn: #fbbf24;
+      --danger: #f87171;
+      --info: #60a5fa;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.45 ui-sans-serif, system-ui, Segoe UI, sans-serif;
+    }
+    main {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+    h1 { font-size: 24px; line-height: 1.25; font-weight: 600; margin: 0 0 8px; }
+    h2 { font-size: 18px; line-height: 1.3; font-weight: 600; margin: 0 0 8px; }
+    p { margin: 0; }
+    .muted { color: var(--muted); }
+    .small { font-size: 12px; line-height: 1.4; }
+    .stack { display: flex; flex-direction: column; gap: 24px; }
+    .stack-sm { display: flex; flex-direction: column; gap: 8px; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .grid { display: grid; gap: 12px; }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    label, .label { font-size: 12px; color: var(--muted); font-weight: 500; }
+    input, select, button {
+      font: inherit;
+      color: var(--text);
+      background: var(--fill);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+    }
+    input, select { height: 32px; padding: 0 10px; width: 100%; }
+    input:focus, select:focus { outline: 1px solid var(--accent); }
+    button { height: 32px; padding: 0 12px; cursor: pointer; width: auto; }
+    button.ghost { background: transparent; }
+    button.secondary { background: var(--surface); }
+    .pill {
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: transparent;
+      cursor: pointer;
+    }
+    .pill.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+    .stats { display: flex; flex-wrap: wrap; gap: 16px; }
+    .stat .value { font-size: 22px; font-weight: 600; }
+    .stat .cap { font-size: 12px; color: var(--muted); }
+    .tone-success { color: var(--ok); }
+    .tone-warning { color: var(--warn); }
+    .tone-danger { color: var(--danger); }
+    .tone-info { color: var(--info); }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+    }
+    .card-h {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line);
+      font-size: 12px;
+    }
+    .card-b { padding: 14px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; }
+    th { font-size: 12px; color: var(--muted); font-weight: 500; }
+    .right { text-align: right; }
+    .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 8px; background: #6b7280; }
+    .dot.danger { background: var(--danger); }
+    .dot.success { background: var(--ok); }
+    .dot.warning { background: var(--warn); }
+    .dot.info { background: var(--info); }
+    .callout {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px 14px;
+      background: var(--surface);
+    }
+    .callout strong { display: block; margin-bottom: 4px; }
+    .bar-wrap { display: flex; flex-direction: column; gap: 6px; }
+    .bar-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+    .bar {
+      height: 8px;
+      background: var(--fill);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .bar > span { display: block; height: 100%; }
+    .bar.yellow > span { background: var(--warn); }
+    .bar.orange > span { background: #fb923c; }
+    .bar.red > span { background: var(--danger); }
+    .divider { height: 1px; background: var(--line); }
+    .hidden { display: none; }
+    @media (max-width: 800px) {
+      .grid-4, .grid-2 { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 560px) {
+      .grid-4, .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="stack">
+    <div class="stack-sm">
+      <h1>TP / SL builder</h1>
+      <p class="muted">
+        Enter an entry, stop, and target price for ES, MES, MGC, or SIL.
+        Distances convert to dollars at your size, then compare the stop to
+        the $500 soft / $750 hard daily lock.
+      </p>
+    </div>
+
+    <div class="row" id="symbol-pills"></div>
+    <div class="stats" id="top-stats"></div>
+
+    <section class="stack-sm">
+      <h2>Trade setup</h2>
+      <p class="small muted" id="spec-line"></p>
+      <div class="grid grid-4">
+        <div class="field">
+          <span class="label">Side</span>
+          <div class="row" id="side-pills"></div>
+        </div>
+        <div class="field">
+          <label for="size">Size</label>
+          <select id="size"></select>
+        </div>
+        <div class="field">
+          <label for="entry">Entry price</label>
+          <input id="entry" inputmode="decimal" placeholder="e.g. 6500.00" />
+        </div>
+        <div class="field">
+          <span class="label">Tick align</span>
+          <button class="ghost" id="snap">Snap prices to tick</button>
+        </div>
+      </div>
+      <div class="grid grid-2">
+        <div class="field">
+          <label for="sl">Stop-loss price</label>
+          <input id="sl" inputmode="decimal" placeholder="e.g. 6490.00" />
+        </div>
+        <div class="field">
+          <label for="tp">Take-profit price</label>
+          <input id="tp" inputmode="decimal" placeholder="e.g. 6520.00" />
+        </div>
+      </div>
+    </section>
+
+    <section class="stack-sm">
+      <p class="small muted">Fill stop from dollar risk</p>
+      <div class="row">
+        <div class="row" id="risk-pills"></div>
+        <input id="fill-risk" inputmode="decimal" placeholder="Custom $" style="width:96px" />
+        <button class="secondary" id="apply-stop" type="button">Apply stop</button>
+      </div>
+      <p class="small muted">Fill target from R-multiple or dollars</p>
+      <div class="row">
+        <div class="row" id="target-pills"></div>
+        <input id="fill-target" inputmode="decimal" placeholder="Custom $" style="width:96px" />
+        <button class="secondary" id="apply-target" type="button">Apply target</button>
+      </div>
+    </section>
+
+    <section class="card hidden" id="levels-card">
+      <div class="card-h">
+        <span>Built levels</span>
+        <span class="muted" id="levels-meta"></span>
+      </div>
+      <div class="card-b stack-sm">
+        <div class="stats" id="level-stats"></div>
+        <div class="bar-wrap hidden" id="lock-bar">
+          <div class="bar-labels">
+            <span>Stop vs $750 hard daily lock</span>
+            <span id="lock-bar-right"></span>
+          </div>
+          <div class="bar" id="lock-bar-fill"><span></span></div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Level</th>
+              <th class="right">Price</th>
+              <th class="right">Ticks</th>
+              <th class="right">P&amp;L</th>
+              <th>Note</th>
+            </tr>
+          </thead>
+          <tbody id="level-rows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <div id="callouts" class="stack-sm"></div>
+
+    <section class="stack-sm hidden" id="lock-section">
+      <h2>Lock-aware stop prices from this entry</h2>
+      <p class="small muted" id="lock-caption"></p>
+      <table>
+        <thead>
+          <tr>
+            <th>Budget</th>
+            <th class="right">Dollars</th>
+            <th class="right">Ticks at this size</th>
+            <th class="right">Stop price</th>
+          </tr>
+        </thead>
+        <tbody id="lock-rows"></tbody>
+      </table>
+    </section>
+
+    <div class="divider"></div>
+
+    <section class="stack-sm">
+      <h2>Contract tick sheet</h2>
+      <p class="small muted">
+        Confirmed specs. ES and MES share a 0.25-pt tick; 1 ES equals 10 MES
+        in dollar-per-tick at your caps. SIL is the fastest P&amp;L per tick at max size.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Contract</th>
+            <th class="right">Tick size</th>
+            <th class="right">Tick $ (1)</th>
+            <th class="right">Cap</th>
+            <th class="right">$ / tick at cap</th>
+            <th class="right">Ticks to $500 at cap</th>
+          </tr>
+        </thead>
+        <tbody id="sheet-rows"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    const SOFT_LOCK = 500;
+    const HARD_LOCK = 750;
+    const PLANNED_RISK = 350;
+    const STORAGE_KEY = "t3-tp-sl-builder";
+
+    const CONTRACTS = {
+      ES:  { symbol: "ES",  name: "E-mini S&P 500",       tickSize: 0.25,  tickValue: 12.5, multiplier: 50,   maxContracts: 1,  unit: "index pts" },
+      MES: { symbol: "MES", name: "Micro E-mini S&P 500", tickSize: 0.25,  tickValue: 1.25, multiplier: 5,    maxContracts: 10, unit: "index pts" },
+      MGC: { symbol: "MGC", name: "Micro Gold",           tickSize: 0.10,  tickValue: 1.00, multiplier: 10,   maxContracts: 5,  unit: "$/oz" },
+      SIL: { symbol: "SIL", name: "Micro Silver",         tickSize: 0.005, tickValue: 5.00, multiplier: 1000, maxContracts: 5,  unit: "$/oz" },
+    };
+    const SYMBOLS = ["ES", "MES", "MGC", "SIL"];
+    const DEFAULT_DRAFTS = {
+      ES:  { side: "long", size: "1", entry: "6500.00", tp: "6520.00", sl: "6490.00" },
+      MES: { side: "long", size: "1", entry: "6500.00", tp: "6520.00", sl: "6490.00" },
+      MGC: { side: "long", size: "1", entry: "2650.00", tp: "2660.00", sl: "2645.00" },
+      SIL: { side: "long", size: "1", entry: "31.000",  tp: "31.100",  sl: "30.950" },
+    };
+
+    function priceDecimals(tickSize) {
+      const frac = String(tickSize).split(".")[1] || "";
+      return Math.max(frac.length, 2);
+    }
+    function parseNum(raw) {
+      const n = Number(String(raw).replace(/[$,\s]/g, ""));
+      return Number.isFinite(n) ? n : null;
+    }
+    function snapToTick(price, tickSize) {
+      const snapped = Math.round(price / tickSize) * tickSize;
+      return Number(snapped.toFixed(priceDecimals(tickSize)));
+    }
+    function isOnTick(price, tickSize) {
+      return Math.abs(price - snapToTick(price, tickSize)) < tickSize * 1e-6;
+    }
+    function fmtPrice(price, tickSize) {
+      return price.toFixed(priceDecimals(tickSize));
+    }
+    function fmtUsd(n, signed) {
+      const abs = Math.abs(n).toFixed(2);
+      if (!signed) return "$" + abs;
+      if (n > 0) return "+$" + abs;
+      if (n < 0) return "-$" + abs;
+      return "$" + abs;
+    }
+    function ticksBetween(a, b, tickSize) {
+      return Math.round(Math.abs(a - b) / tickSize);
+    }
+    function signedTicks(from, to, tickSize, side) {
+      const raw = (to - from) / tickSize;
+      return Math.round(side === "long" ? raw : -raw);
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw);
+      } catch {
+        return null;
+      }
+    }
+
+    const saved = loadState();
+    const state = {
+      symbol: saved?.symbol && CONTRACTS[saved.symbol] ? saved.symbol : "MES",
+      drafts: { ...DEFAULT_DRAFTS, ...(saved?.drafts || {}) },
+      fillRisk: saved?.fillRisk || "50",
+      fillTarget: saved?.fillTarget || "100",
+    };
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+    function spec() { return CONTRACTS[state.symbol]; }
+    function draft() { return state.drafts[state.symbol] || DEFAULT_DRAFTS[state.symbol]; }
+    function patchDraft(partial) {
+      state.drafts[state.symbol] = { ...draft(), ...partial };
+      saveState();
+      render();
+    }
+    function sizeOf() {
+      const n = parseInt(draft().size, 10);
+      if (!Number.isFinite(n)) return 1;
+      return Math.min(Math.max(n, 1), spec().maxContracts);
+    }
+
+    function compute() {
+      const s = spec();
+      const d = draft();
+      const size = sizeOf();
+      const entry = parseNum(d.entry);
+      const sl = parseNum(d.sl);
+      const tp = parseNum(d.tp);
+      const dollarPerTick = s.tickValue * size;
+      const ticksToSoft = dollarPerTick > 0 ? SOFT_LOCK / dollarPerTick : 0;
+      const ticksToHard = dollarPerTick > 0 ? HARD_LOCK / dollarPerTick : 0;
+      const ticksToPlanned = dollarPerTick > 0 ? PLANNED_RISK / dollarPerTick : 0;
+      if (entry === null || entry <= 0) {
+        return { s, d, size, entry, sl, tp, dollarPerTick, ticksToSoft, ticksToHard, ticksToPlanned, calc: null };
+      }
+      const slPx = sl !== null && sl > 0 ? sl : null;
+      const tpPx = tp !== null && tp > 0 ? tp : null;
+      const slTicks = slPx !== null ? signedTicks(entry, slPx, s.tickSize, d.side) : null;
+      const tpTicks = tpPx !== null ? signedTicks(entry, tpPx, s.tickSize, d.side) : null;
+      const slDollars = slTicks !== null ? slTicks * s.tickValue * size : null;
+      const tpDollars = tpTicks !== null ? tpTicks * s.tickValue * size : null;
+      const slWrongSide = slTicks !== null && slTicks >= 0;
+      const tpWrongSide = tpTicks !== null && tpTicks <= 0;
+      const riskAbs = slDollars !== null ? Math.abs(slDollars) : null;
+      const rewardAbs = tpDollars !== null ? Math.abs(tpDollars) : null;
+      const rr = riskAbs && riskAbs > 0 && rewardAbs !== null ? rewardAbs / riskAbs : null;
+      function lockPrice(dollars) {
+        const offset = (dollars / (s.tickValue * size)) * s.tickSize;
+        const raw = d.side === "long" ? entry - offset : entry + offset;
+        return snapToTick(raw, s.tickSize);
+      }
+      return {
+        s, d, size, entry, sl, tp, dollarPerTick, ticksToSoft, ticksToHard, ticksToPlanned,
+        calc: {
+          slOk: slPx !== null,
+          tpOk: tpPx !== null,
+          slTicks, tpTicks, slDollars, tpDollars, slWrongSide, tpWrongSide,
+          riskAbs, rewardAbs, rr, lockPrice,
+          entryOffTick: !isOnTick(entry, s.tickSize),
+          slOffTick: slPx !== null && !isOnTick(slPx, s.tickSize),
+          tpOffTick: tpPx !== null && !isOnTick(tpPx, s.tickSize),
+        },
+      };
+    }
+
+    function applyStopDollars(dollars) {
+      const { s, d, size, entry } = compute();
+      if (entry === null || entry <= 0 || dollars <= 0) return;
+      const offset = (dollars / (s.tickValue * size)) * s.tickSize;
+      const raw = d.side === "long" ? entry - offset : entry + offset;
+      patchDraft({ sl: fmtPrice(snapToTick(raw, s.tickSize), s.tickSize) });
+    }
+    function applyTargetDollars(dollars) {
+      const { s, d, size, entry } = compute();
+      if (entry === null || entry <= 0 || dollars <= 0) return;
+      const offset = (dollars / (s.tickValue * size)) * s.tickSize;
+      const raw = d.side === "long" ? entry + offset : entry - offset;
+      patchDraft({ tp: fmtPrice(snapToTick(raw, s.tickSize), s.tickSize) });
+    }
+    function applyR(multiple) {
+      const { s, d, entry, sl } = compute();
+      if (entry === null || sl === null || entry <= 0 || sl <= 0) return;
+      const riskTicks = ticksBetween(entry, sl, s.tickSize);
+      if (riskTicks <= 0) return;
+      const raw = d.side === "long"
+        ? entry + riskTicks * multiple * s.tickSize
+        : entry - riskTicks * multiple * s.tickSize;
+      patchDraft({ tp: fmtPrice(snapToTick(raw, s.tickSize), s.tickSize) });
+    }
+    function snapAll() {
+      const { s, entry, sl, tp } = compute();
+      const next = {};
+      if (entry !== null) next.entry = fmtPrice(snapToTick(entry, s.tickSize), s.tickSize);
+      if (tp !== null) next.tp = fmtPrice(snapToTick(tp, s.tickSize), s.tickSize);
+      if (sl !== null) next.sl = fmtPrice(snapToTick(sl, s.tickSize), s.tickSize);
+      patchDraft(next);
+    }
+
+    function setIfUnfocused(id, value) {
+      const node = document.getElementById(id);
+      if (document.activeElement !== node) node.value = value;
+    }
+
+    function el(html) {
+      const t = document.createElement("template");
+      t.innerHTML = html.trim();
+      return t.content;
+    }
+    function pill(label, active, onClick) {
+      const b = document.createElement("button");
+      b.className = "pill" + (active ? " active" : "");
+      b.type = "button";
+      b.textContent = label;
+      b.addEventListener("click", onClick);
+      return b;
+    }
+    function stat(value, label, tone) {
+      return `<div class="stat"><div class="value ${tone ? "tone-" + tone : ""}">${value}</div><div class="cap">${label}</div></div>`;
+    }
+
+    function render() {
+      const { s, d, size, entry, sl, tp, dollarPerTick, ticksToSoft, ticksToHard, ticksToPlanned, calc } = compute();
+      saveState();
+
+      const symbolPills = document.getElementById("symbol-pills");
+      symbolPills.replaceChildren(...SYMBOLS.map((id) =>
+        pill(id, state.symbol === id, () => {
+          state.symbol = id;
+          const current = state.drafts[id] || DEFAULT_DRAFTS[id];
+          const cap = CONTRACTS[id].maxContracts;
+          const n = Math.min(Math.max(parseInt(current.size, 10) || 1, 1), cap);
+          state.drafts[id] = { ...current, size: String(n) };
+          render();
+        })
+      ));
+
+      document.getElementById("top-stats").innerHTML =
+        stat(fmtUsd(s.tickValue), s.symbol + " tick · 1 contract") +
+        stat(fmtUsd(dollarPerTick), "$ / tick at " + size + (size === 1 ? " contract" : " contracts")) +
+        stat(ticksToSoft.toFixed(1), "Ticks to $500 soft lock", ticksToSoft <= 30 ? "warning" : "") +
+        stat(ticksToHard.toFixed(1), "Ticks to $750 hard lock", ticksToHard <= 30 ? "warning" : "");
+
+      document.getElementById("spec-line").textContent =
+        s.name + " · tick " + s.tickSize + " " + s.unit + " · " + fmtUsd(s.tickValue) +
+        " / tick · cap " + s.maxContracts + " · " + fmtUsd(s.multiplier) + " per full point";
+
+      const sidePills = document.getElementById("side-pills");
+      sidePills.replaceChildren(
+        pill("Long", d.side === "long", () => patchDraft({ side: "long" })),
+        pill("Short", d.side === "short", () => patchDraft({ side: "short" })),
+      );
+
+      const sizeSel = document.getElementById("size");
+      sizeSel.innerHTML = "";
+      for (let i = 1; i <= s.maxContracts; i++) {
+        const opt = document.createElement("option");
+        opt.value = String(i);
+        opt.textContent = i + (i === 1 ? " contract" : " contracts");
+        if (i === size) opt.selected = true;
+        sizeSel.appendChild(opt);
+      }
+
+      setIfUnfocused("entry", d.entry);
+      setIfUnfocused("sl", d.sl);
+      setIfUnfocused("tp", d.tp);
+
+      const riskPills = document.getElementById("risk-pills");
+      riskPills.replaceChildren();
+      [50, 100, PLANNED_RISK, SOFT_LOCK, HARD_LOCK].forEach((amt) => {
+        riskPills.appendChild(pill(fmtUsd(amt), false, () => applyStopDollars(amt)));
+      });
+      const targetPills = document.getElementById("target-pills");
+      targetPills.replaceChildren();
+      [1, 2, 3].forEach((r) => {
+        targetPills.appendChild(pill(r + "R", false, () => applyR(r)));
+      });
+      setIfUnfocused("fill-risk", state.fillRisk);
+      setIfUnfocused("fill-target", state.fillTarget);
+
+      const card = document.getElementById("levels-card");
+      if (!calc) {
+        card.classList.add("hidden");
+      } else {
+        card.classList.remove("hidden");
+        document.getElementById("levels-meta").textContent = s.symbol + " · " + size + " × " + d.side;
+        let statsHtml = "";
+        const slTone = calc.riskAbs == null ? ""
+          : calc.slWrongSide ? "warning"
+          : calc.riskAbs > HARD_LOCK ? "danger"
+          : calc.riskAbs > SOFT_LOCK ? "warning" : "";
+        if (calc.riskAbs != null) statsHtml += stat(fmtUsd(calc.riskAbs), "Stop risk", slTone);
+        if (calc.rewardAbs != null) statsHtml += stat(fmtUsd(calc.rewardAbs), "Take-profit", calc.tpWrongSide ? "warning" : "success");
+        if (calc.rr != null) statsHtml += stat(calc.rr.toFixed(2) + "R", "Reward / risk");
+        if (calc.slTicks != null) statsHtml += stat(String(Math.abs(calc.slTicks)), "Stop ticks");
+        document.getElementById("level-stats").innerHTML = statsHtml;
+
+        const bar = document.getElementById("lock-bar");
+        if (calc.riskAbs != null && !calc.slWrongSide) {
+          bar.classList.remove("hidden");
+          document.getElementById("lock-bar-right").textContent = fmtUsd(calc.riskAbs) + " / " + fmtUsd(HARD_LOCK);
+          const fill = document.getElementById("lock-bar-fill");
+          fill.className = "bar " + (calc.riskAbs > SOFT_LOCK ? "red" : calc.riskAbs > PLANNED_RISK ? "orange" : "yellow");
+          fill.firstElementChild.style.width = Math.min(100, (calc.riskAbs / HARD_LOCK) * 100) + "%";
+        } else {
+          bar.classList.add("hidden");
+        }
+
+        const rows = [];
+        if (calc.slOk && sl !== null) {
+          rows.push(["Stop", fmtPrice(sl, s.tickSize), String(Math.abs(calc.slTicks)), fmtUsd(calc.slDollars, true), calc.slWrongSide ? "Wrong side of entry" : "Protective stop", calc.slWrongSide ? "warning" : "danger"]);
+        }
+        rows.push(["Entry", fmtPrice(entry, s.tickSize), "0", fmtUsd(0, true), d.side === "long" ? "Long fill" : "Short fill", "neutral"]);
+        if (calc.tpOk && tp !== null) {
+          rows.push(["Target", fmtPrice(tp, s.tickSize), String(Math.abs(calc.tpTicks)), fmtUsd(calc.tpDollars, true), calc.tpWrongSide ? "Wrong side of entry" : "Take profit", calc.tpWrongSide ? "warning" : "success"]);
+        }
+        document.getElementById("level-rows").replaceChildren(...rows.map((r) => el(
+          `<tr><td><span class="dot ${r[5]}"></span>${r[0]}</td><td class="right">${r[1]}</td><td class="right">${r[2]}</td><td class="right">${r[3]}</td><td>${r[4]}</td></tr>`
+        )));
+      }
+
+      const callouts = [];
+      if (calc?.riskAbs != null && !calc.slWrongSide) {
+        if (calc.riskAbs > HARD_LOCK) {
+          callouts.push(["danger", "Stop exceeds the $750 hard lock", "This stop is " + fmtUsd(calc.riskAbs) + " of risk — larger than the hard daily auto-liq. Size down or tighten the stop before you send it."]);
+        } else if (calc.riskAbs > SOFT_LOCK) {
+          callouts.push(["warning", "Stop exceeds the $500 soft lock", "This stop is " + fmtUsd(calc.riskAbs) + " of risk. A full stop-out locks the day even if the hard $750 line is still intact."]);
+        } else if (calc.riskAbs > PLANNED_RISK) {
+          callouts.push(["info", "Stop is above the $350 planned-risk budget", "Allowed by the locks, but larger than the " + fmtUsd(PLANNED_RISK) + " daily planned-risk target."]);
+        }
+      }
+      if (calc?.slWrongSide || calc?.tpWrongSide) {
+        callouts.push(["warning", "Price is on the wrong side of entry",
+          d.side === "long"
+            ? "For a long, the stop must be below entry and the target above it."
+            : "For a short, the stop must be above entry and the target below it."]);
+      }
+      const off = [];
+      if (calc?.entryOffTick) off.push("entry");
+      if (calc?.slOffTick) off.push("stop");
+      if (calc?.tpOffTick) off.push("target");
+      if (off.length) {
+        callouts.push(["info", "Price is off the tick increment",
+          "The " + off.join(", ") + (off.length === 1 ? " is" : " are") +
+          " not a multiple of " + s.tickSize + ". Use Snap prices to tick — dollars still use the nearest whole-tick distance."]);
+      }
+      if (state.symbol === "SIL" && size >= 3) {
+        callouts.push(["warning", "SIL moves the lock in the fewest ticks",
+          size + " SIL is " + fmtUsd(dollarPerTick) + " per tick. The $500 soft lock is about " +
+          ticksToSoft.toFixed(0) + " ticks of adverse movement — place the stop from the number, not feel."]);
+      }
+      document.getElementById("callouts").replaceChildren(...callouts.map((c) => el(
+        `<div class="callout"><strong class="tone-${c[0]}">${c[1]}</strong><p class="small muted">${c[2]}</p></div>`
+      )));
+
+      const lockSection = document.getElementById("lock-section");
+      if (!calc) {
+        lockSection.classList.add("hidden");
+      } else {
+        lockSection.classList.remove("hidden");
+        document.getElementById("lock-caption").textContent =
+          "Stop price that spends the full budget at " + size + " " + s.symbol + " " + d.side +
+          ". Source: T3 $10k account limits · planned $" + PLANNED_RISK +
+          " / soft $" + SOFT_LOCK + " / hard $" + HARD_LOCK + ".";
+        const lockData = [
+          ["Planned", PLANNED_RISK, ticksToPlanned, "info"],
+          ["Soft lock", SOFT_LOCK, ticksToSoft, "warning"],
+          ["Hard lock", HARD_LOCK, ticksToHard, "danger"],
+        ];
+        document.getElementById("lock-rows").replaceChildren(...lockData.map((r) => el(
+          `<tr><td><span class="dot ${r[3]}"></span>${r[0]}</td><td class="right">${fmtUsd(r[1])}</td><td class="right">${r[2].toFixed(1)}</td><td class="right">${fmtPrice(calc.lockPrice(r[1]), s.tickSize)}</td></tr>`
+        )));
+      }
+
+      document.getElementById("sheet-rows").replaceChildren(...SYMBOLS.map((id) => {
+        const c = CONTRACTS[id];
+        const maxTick = c.tickValue * c.maxContracts;
+        return el(
+          `<tr><td>${c.symbol}</td><td class="right">${c.tickSize} ${c.unit}</td><td class="right">${fmtUsd(c.tickValue)}</td><td class="right">${c.maxContracts}</td><td class="right">${fmtUsd(maxTick)}</td><td class="right">${(SOFT_LOCK / maxTick).toFixed(1)}</td></tr>`
+        );
+      }));
+    }
+
+    document.getElementById("size").addEventListener("change", (e) => patchDraft({ size: e.target.value }));
+    document.getElementById("entry").addEventListener("input", (e) => patchDraft({ entry: e.target.value }));
+    document.getElementById("sl").addEventListener("input", (e) => patchDraft({ sl: e.target.value }));
+    document.getElementById("tp").addEventListener("input", (e) => patchDraft({ tp: e.target.value }));
+    document.getElementById("fill-risk").addEventListener("input", (e) => {
+      state.fillRisk = e.target.value;
+      saveState();
+    });
+    document.getElementById("fill-target").addEventListener("input", (e) => {
+      state.fillTarget = e.target.value;
+      saveState();
+    });
+    document.getElementById("apply-stop").addEventListener("click", () => {
+      const n = parseNum(state.fillRisk);
+      if (n !== null) applyStopDollars(n);
+    });
+    document.getElementById("apply-target").addEventListener("click", () => {
+      const n = parseNum(state.fillTarget);
+      if (n !== null) applyTargetDollars(n);
+    });
+    document.getElementById("snap").addEventListener("click", snapAll);
+
+    render();
+  </script>
+</body>
+</html>
